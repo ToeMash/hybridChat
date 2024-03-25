@@ -1,7 +1,7 @@
 # hybridChat
 
 GOALS:
-* Learn how to build simple networked applications in Python
+* Learn how to build simple networked applications in Python 3.12.0
     - Built initially over TCP
     - Later developed over UDP
         - NOTE: In the UDP implementation, I still made use of ACKs to confirm communications. This could have been implemented much more simply, but I wanted the user experience to be relatively consistent regardless of the server mode.
