@@ -32,3 +32,6 @@ HOW TO USE:
     3. Run another client with the same command, but with different ID and Port (if being ran on the same IP)
         - After connecting, Run /register, /bridge, /chat in order
     - Can quit with /quit or ctrl-c at any time (unless bugged)
+
+TO DO:
+    - Write test suite
