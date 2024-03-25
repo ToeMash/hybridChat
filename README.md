@@ -34,4 +34,4 @@ HOW TO USE:
 * Can quit with /quit or ctrl-c at any time (unless bugged)
 
 TO DO:
-    * Write test suite
+* Write test suite
