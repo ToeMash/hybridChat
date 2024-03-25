@@ -111,10 +111,14 @@ def register(data):
     client_id = data_list[1].split(' ')[1]
     client_ip = data_list[2].split(' ')[1]
     client_port = data_list[3].split(' ')[1]
-    register_dict[client_id] = [client_ip, client_port]
-    print(f"REGISTER: {client_id} from {client_ip}:{client_port} received")
 
-    data_out = f"REGACK\r\nclientID: {client_id}\r\nIP: {client_ip}\r\nPort: {client_port}\r\n\r\n"
+    if client_id in register_dict.keys():
+        data_out = "REGNACK\r\n\r\n"
+        print(f"REGISTER ERROR: Client ID already in use")
+    else:
+        register_dict[client_id] = [client_ip, client_port]
+        print(f"REGISTER: {client_id} from {client_ip}:{client_port} received")
+        data_out = f"REGACK\r\nclientID: {client_id}\r\nIP: {client_ip}\r\nPort: {client_port}\r\n\r\n"
     return data_out
 
 def bridge(data):

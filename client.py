@@ -125,7 +125,10 @@ def register_tcp(): # Sends client information to Server over TCP connection
         shutdown(client_socket)
     data = f"REGISTER\r\nclientID: {args.id}\r\nIP: {client_ip}\r\nPort: {args.port}\r\n\r\n"
     client_socket.send(data.encode())
-    dataFromServer = client_socket.recv(1024)
+    data_out = client_socket.recv(1024)
+    if data_out.decode().split('\r\n') == "REGNACK":
+        print("ERROR: ID already in use, shutting down")
+        shutdown(client_socket)
     client_socket.close()
     return
 
@@ -142,6 +145,9 @@ def register_udp(): # Sends client information to Server over UDP connection
         if data_out.decode() == f"REGACK\r\nclientID: {args.id}\r\nIP: {client_ip}\r\nPort: {args.port}\r\n\r\n":
             sock.close()
             return
+        elif data_out.decode().split('\r\n') == "REGNACK":
+            print("ERROR: ID already in use, shutting down")
+            shutdown(sock)
     print("Error: No response from server")
     shutdown(sock)
 
@@ -284,7 +290,9 @@ def chat_tcp(): # messages server to indicate a chat has begun, begins chat_loop
     client_socket.connect(server_address)
     data_to_server = f"CHAT\r\nclientID1: {args.id}\r\nclientID2: {chat_target[0]}"
     client_socket.send(data_to_server.encode())
+    client_socket.close()
 
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((chat_target[1], int(chat_target[2])))
     data = f"CHAT\r\nclientID: {args.id}\r\n\r\n\r\n"
     client_socket.send(data.encode())
