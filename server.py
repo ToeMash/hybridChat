@@ -56,6 +56,7 @@ def do_server_tcp(): # setup socket, bind on address, wait for TCP connection an
             client_connected.close()
         else:
             print("ERROR: Unrecognized packet type")
+        print(register_dict) # for dev
     
 
 def do_server_udp(): # setup socket, bind on address, wait for UDP packets and complete "server" actions
@@ -85,6 +86,7 @@ def do_server_udp(): # setup socket, bind on address, wait for UDP packets and c
             sock.sendto(cleanup(data).encode(), client_address)
         else:
             print("ERROR: Unrecognized packet type")
+        print(register_dict) # for dev
         
 
 def chat(data):

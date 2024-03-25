@@ -60,6 +60,7 @@ def get_input_tcp(): # Terminal input loop for TCP server
             print(args.id)
         elif line.rstrip() == '/register':
             register_tcp()
+            has_registered = True
         elif line.rstrip() == '/bridge' and has_registered:
             bridge_tcp()
         elif line.rstrip() == '/chat' and len(chat_target) > 0:
@@ -76,6 +77,7 @@ def get_input_udp(): # Terminal input loop for TCP server
             print(args.id)
         elif line.rstrip() == '/register':
             register_udp()
+            has_registered = True
         elif line.rstrip() == '/bridge' and has_registered:
             bridge_udp()
         elif line.rstrip() == '/chat' and len(chat_target) > 0:
@@ -102,12 +104,16 @@ def quit_udp(): # Sends a quit packet to server over UDP before shutting down
     sock.bind(client_address)
     sock.settimeout(2)
     t_end = time.time() + 2
-    while time.time() < t_end:
-        sock.sendto(data.encode(), server_address)
-        data_out, address = sock.recvfrom(1024)
-        if data_out.decode() == f"QUITACK\r\nclientID: {args.id}\r\n\r\n":
-            shutdown(sock)
-    shutdown(sock)
+    try:
+        while time.time() < t_end:
+            sock.sendto(data.encode(), server_address)
+            data_out, address = sock.recvfrom(1024)
+            if data_out.decode() == f"QUITACK\r\nclientID: {args.id}\r\n\r\n":
+                shutdown(sock)
+        shutdown(sock)
+    except:
+        print("Timeout, shutting down")
+        shutdown(sock)
 
 
 def register_tcp(): # Sends client information to Server over TCP connection
@@ -175,6 +181,7 @@ def bridge_udp(): # same as bridge_tcp() but over UDP
     global chat_target
     if data_list[1].split(':')[1] == ' ':
         chat_target = []
+        sock.close()
         wait_udp()
     else:
         chat_target = data_list[1].split(':')[1].lstrip(), data_list[2].split(':')[1].lstrip(), data_list[3].split(':')[1].lstrip()
@@ -196,12 +203,37 @@ def wait_udp(): # waits for another client to send a message
         if chat_list[0] == 'CHAT':
             client_id = chat_list[0].lstrip()
             print(f"incoming chat request from {client_id}")
+        data_out, chat_address = sock.recvfrom(1024)
+        if not data_out:
+            print("Received empty packet, shutting down")
+            shutdown(sock)
+        print(data_out.decode().split('\r\n')[2])
     except:
+        print("Timeout: shutting down")
         shutdown(sock)
+    
     try:
-        chat_packet, chat_address = sock.recvfrom(1024)
+        for line in sys.stdin:
+            if line.rstrip() == '/quit':
+                data = 'QUIT\r\n\r\n'
+                sock.sendto(data.encode(), chat_address)
+                shutdown(sock)
+            else:
+                data = f"CHAT\r\nclientID: {args.id}\r\n{line}\r\n\r\n"
+                sock.sendto(data.encode(), chat_address)
+            data_out, chat_address = sock.recvfrom(1024)
+            if not data_out:
+                print("Received empty packet, shutting down")
+                shutdown(sock)
+            data_list = data_out.decode().split('\r\n')
+            if data_list[0] == 'QUIT':
+                print("Received Response Type: QUIT - Shutting down")
+                shutdown(sock)
+            elif data_list[0] == 'CHAT':
+                print(data_list[2])
     except:
         shutdown(sock)
+
 
 def wait_tcp(): # Sets up client as server and waits for another client to connect
     serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -212,73 +244,110 @@ def wait_tcp(): # Sets up client as server and waits for another client to conne
         shutdown()
     serverSocket.listen()
 
-    (clientConnected, clientAddress) = serverSocket.accept()
+    (client_connected, clientAddress) = serverSocket.accept()
     try:
-        chat_packet = clientConnected.recv(1024)
+        chat_packet = client_connected.recv(1024)
         chat_packet_decoded = chat_packet.decode()
         chat_pack_list = chat_packet_decoded.split('\r\n')
         if chat_pack_list[0] == 'CHAT':
             client_id = chat_pack_list[1].lstrip()
             print(f"incoming chat request from {client_id}")
-        dataFromClient = clientConnected.recv(1024)
-        if not dataFromClient:
+        data_out = client_connected.recv(1024)
+        if not data_out:
             print("Received empty packet, shutting down")
-            shutdown(clientConnected)
-        print(dataFromClient.decode().split('\r\n')[2])
+            shutdown(client_connected)
+        print(data_out.decode().split('\r\n')[2])
 
         for line in sys.stdin:
             if line.rstrip() == '/quit':
                 data = 'QUIT\r\n\r\n'
-                clientConnected.send(data.encode())
-                shutdown(clientConnected)
+                client_connected.send(data.encode())
+                shutdown(client_connected)
             else:
                 data = f"CHAT\r\nclientID: {args.id}\r\n{line}\r\n\r\n"
-                clientConnected.send(data.encode())
-            dataFromClient = clientConnected.recv(1024)
-            if not dataFromClient:
+                client_connected.send(data.encode())
+            data_out = client_connected.recv(1024)
+            if not data_out:
                 print("Received empty packet, shutting down")
-                shutdown(clientConnected)
-            data_out = dataFromClient.decode().split('\r\n')
+                shutdown(client_connected)
+            data_out = data_out.decode().split('\r\n')
             if data_out[0] == 'QUIT':
                 print("Received Response Type: QUIT - Shutting down")
-                shutdown(clientConnected)
+                shutdown(client_connected)
             elif data_out[0] == 'CHAT':
                 print(data_out[2])
     except KeyboardInterrupt:
-        shutdown(clientConnected)
+        shutdown(client_connected)
 
 def chat_tcp(): # messages server to indicate a chat has begun, begins chat_loop
-    clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    clientSocket.connect(server_address)
-    data = f"CHAT\r\nclientID1: {args.id}\r\nclientID2: {chat_target[0]}"
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect(server_address)
+    data_to_server = f"CHAT\r\nclientID1: {args.id}\r\nclientID2: {chat_target[0]}"
+    client_socket.send(data_to_server.encode())
 
-    clientSocket.connect((chat_target[1], int(chat_target[2])))
+    client_socket.connect((chat_target[1], int(chat_target[2])))
     data = f"CHAT\r\nclientID: {args.id}\r\n\r\n\r\n"
-    clientSocket.send(data.encode())
+    client_socket.send(data.encode())
     try:
-        chat_loop_tcp(clientSocket)
+        chat_loop_tcp(client_socket)
     except KeyboardInterrupt:
-        shutdown(clientSocket)
+        shutdown(client_socket)
 
-def chat_loop_tcp(clientSocket): # Connect to other client, begin chatting
-    for line in sys.stdin: # chat loop
+def chat_udp():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.settimeout(60)
+    data_to_server = f"CHAT\r\nclientID1: {args.id}\r\nclientID2: {chat_target[0]}"
+    sock.sendto(data_to_server.encode(), server_address)
+
+    data = f"CHAT\r\nclientID: {args.id}\r\n\r\n\r\n"
+    sock.sendto(data.encode(), (chat_target[1], int(chat_target[2])))
+    try:
+        chat_loop_udp(sock, (chat_target[1], int(chat_target[2])))
+    except KeyboardInterrupt:
+        shutdown(sock)
+
+def chat_loop_tcp(client_socket): # Connect to other client, begin chatting
+    for line in sys.stdin:
         if line.rstrip() == '/quit':
             data = 'QUIT\r\n\r\n'
-            clientSocket.send(data.encode())
-            shutdown(clientSocket)
+            client_socket.send(data.encode())
+            shutdown(client_socket)
         else:
             data = f"CHAT\r\nclientID: {args.id}\r\n{line}\r\n\r\n"
-            clientSocket.send(data.encode())
-        dataFromServer = clientSocket.recv(1024)
-        if not dataFromServer:
+            client_socket.send(data.encode())
+        data_out = client_socket.recv(1024)
+        if not data_out:
             print("Received empty packet, shutting down")
-            shutdown(clientSocket)
-        data_out = dataFromServer.decode().split('\r\n')
-        if data_out[0] == 'QUIT':
+            shutdown(client_socket)
+        data_list = data_out.decode().split('\r\n')
+        if data_list[0] == 'QUIT':
             print("Received Response Type: QUIT - Shutting down")
-            shutdown(clientSocket)
-        elif data_out[0] == 'CHAT':
-            print(data_out[2])
+            shutdown(client_socket)
+        elif data_list[0] == 'CHAT':
+            print(data_list[2])
+
+def chat_loop_udp(sock, chatter):
+    try:
+        for line in sys.stdin:
+            if line.rstrip() == '/quit':
+                data = 'QUIT\r\n\r\n'
+                sock.sendto(data.encode(), chatter)
+                shutdown(sock)
+            else:
+                data = f"CHAT\r\nclientID: {args.id}\r\n{line}\r\n\r\n"
+                sock.sendto(data.encode(), chatter)
+            data_out, addr = sock.recvfrom(1024)
+            if not data_out:
+                print("Received empty packet, shutting down")
+                shutdown(sock)
+            data_list = data_out.decode().split('\r\n')
+            if data_list[0] == 'QUIT':
+                print("Received Response Type: QUIT - Shutting down")
+                shutdown(sock)
+            elif data_list[0] == 'CHAT':
+                print(data_list[2])
+    except TimeoutError:
+        print("Timeout: shutting down")
 
 def shutdown(socket=None):
     if socket:
