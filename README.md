@@ -26,12 +26,12 @@ DESIGN:
 
 HOW TO USE:
     1. Run server with command: 'python server.py --port={port of choice} {-u}'
-        - the -u or --udp flag tells the server to be ran in UDP mode
+        * the -u or --udp flag tells the server to be ran in UDP mode
     2. Run a client with command: 'python client.py --id="{id of choice}" --port={port of choice} --server="{address of server with IP:PORT}"'
-        - After connecting, Run /register, /bridge in order
+        * After connecting, Run /register, /bridge in order
     3. Run another client with the same command, but with different ID and Port (if being ran on the same IP)
-        - After connecting, Run /register, /bridge, /chat in order
-    - Can quit with /quit or ctrl-c at any time (unless bugged)
+        * After connecting, Run /register, /bridge, /chat in order
+    * Can quit with /quit or ctrl-c at any time (unless bugged)
 
 TO DO:
-    - Write test suite
+    * Write test suite
