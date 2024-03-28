@@ -17,6 +17,7 @@ DESIGN:
             - BRIDGE packets just containt the client ID, and are used to indicate a client is ready to chat. The server either returns the full information of another client who is available for a connection, or returns a packet with empty header values.
             - CHAT packets contain the client IDs of two users in a chat, this indicates to the server to remove them from the registry.
             - QUIT packets contain the client ID and indicates a user has left, this indicates to the server to remove them from registry.
+        - Added a simple mechanism to defend against DoS attacks. Server keeps a log of number of connections or packets from an IP. If that count exceeds 10 before starting a chat, that IP's packets aren't processed (udp) or their connection is immediately closed (tcp).
     - CLIENT:
         - On startup, client probes the server to determine if it should be ran in TCP or UDP mode.
         - When the client runs the /bridge command, it will receive either a packet with empty headers or a packet containing another user's information:
