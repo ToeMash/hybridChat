@@ -20,6 +20,10 @@ server_ip = socket.gethostbyname(hostname)
 
 register_dict = {}
 
+suspect_ips = {}
+
+banned_ips = []
+
 def do_server_tcp(): # setup socket, bind on address, wait for TCP connection and complete server actions
     print(f"Server is listening on {server_ip}:{args.port}")
     serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -34,6 +38,17 @@ def do_server_tcp(): # setup socket, bind on address, wait for TCP connection an
     
     while(True):
         (client_connected, client_address) = serverSocket.accept()
+        if client_address[0] in banned_ips:
+            client_connected.close()
+            continue
+        else:
+            if client_address[0] in suspect_ips:
+                suspect_ips[client_address[0]] = suspect_ips[client_address[0]] + 1
+                if suspect_ips[client_address[0]] > 10:
+                    del suspect_ips[client_address[0]]
+                    banned_ips.append(client_address[0])
+            else:
+                suspect_ips[client_address[0]] = 1
         
         data = client_connected.recv(1024)
 
@@ -71,6 +86,16 @@ def do_server_udp(): # setup socket, bind on address, wait for UDP packets and c
     
     while(True):
         data, client_address = sock.recvfrom(1024)
+        if client_address[0] in banned_ips:
+            continue # No way to block packets, but stops the server from processing it
+        else:
+            if client_address[0] in suspect_ips:
+                suspect_ips[client_address[0]] = suspect_ips[client_address[0]] + 1
+                if suspect_ips[client_address[0]] > 10:
+                    del suspect_ips[client_address[0]]
+                    banned_ips.append(client_address[0])
+            else:
+                suspect_ips[client_address[0]] = 1
 
         packet_type = data.decode().split('\r\n')[0]
         if packet_type == 'PROBE':
@@ -93,8 +118,16 @@ def chat(data):
     data_list = data.decode().split('\r\n')
     client_id1 = data_list[1].split(' ')[1]
     client_id2 = data_list[2].split(' ')[1]
-    del register_dict[client_id1]
+
+    client_ip1 = register_dict[client_id1][0]
+    client_ip2 = register_dict[client_id2][0]
+
+    if client_ip1 in suspect_ips:
+        del suspect_ips[client_ip1] # we clear an IP from being suspicious once it successfully engages in a chat
+    if client_ip2 in suspect_ips:
+        del suspect_ips[client_ip2]
     print(f"CLEANUP: removing {client_id1} from register\n")
+    del register_dict[client_id1]
     del register_dict[client_id2]
     print(f"CLEANUP: removing {client_id2} from register\n")
 
