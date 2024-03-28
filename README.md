@@ -25,13 +25,13 @@ DESIGN:
         - While chatting, each user will send CHAT packets (different than the CHAT packets for the server) which contain the message. After sending a message, the application blocks until a message is received. Each packet is limited to 1024 bytes.
 
 HOW TO USE:
-    1. Run server with command: 'python server.py --port=<port of choice> <-u>'
-        - the -u or --udp flag tells the server to be ran in UDP mode
-    2. Run a client with command: 'python client.py --id="<id of choice>" --port=<port of choice> --server="<address of server with IP:PORT>"'
-        - After connecting, Run /register, /bridge in order
-    3. Run another client with the same command, but with different ID and Port (if being ran on the same IP)
-        - After connecting, Run /register, /bridge, /chat in order
-    - Can quit with /quit or ctrl-c at any time (unless bugged)
+* 1. Run server with command: 'python server.py --port={port of choice} {-u}'
+    - the -u or --udp flag tells the server to be ran in UDP mode
+* 2. Run a client with command: 'python client.py --id="{id of choice}" --port={port of choice} --server="{address of server with IP:PORT}"'
+    - After connecting, Run /register, /bridge in order
+* 3. Run another client with the same command, but with different ID and Port (if being ran on the same IP)
+    - After connecting, Run /register, /bridge, /chat in order
+* Can quit with /quit or ctrl-c at any time (unless bugged)
 
 TO DO:
-    - Write test suite
+* Write test suite
