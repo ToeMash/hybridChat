@@ -26,6 +26,7 @@ global chat_target
 chat_target = []
 
 def probe():
+    ''' Probing the server to determine if the server is ran in TCP mode or UDP mode '''
     data = "PROBE\r\n\r\n"
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
@@ -53,7 +54,8 @@ def probe():
             return -1
     return -1
 
-def get_input_tcp(): # Terminal input loop for TCP server
+def get_input_tcp():
+    ''' Terminal input loop for communicating with server over TCP'''
     has_registered = False
     for line in sys.stdin:
         if line.rstrip() == '/id':
@@ -70,7 +72,8 @@ def get_input_tcp(): # Terminal input loop for TCP server
         else:
             print("bad input")
 
-def get_input_udp(): # Terminal input loop for TCP server
+def get_input_udp():
+    ''' Terminal input loop for communicating with server over UDP'''
     has_registered = False
     for line in sys.stdin:
         if line.rstrip() == '/id':
@@ -87,7 +90,8 @@ def get_input_udp(): # Terminal input loop for TCP server
         else:
             print("bad input")
 
-def quit_tcp(): # Sends a quit packet to server over TCP before shutting down
+def quit_tcp():
+    ''' Sends a quit packet to server over TCP before shutting down '''
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         client_socket.connect(server_address)
@@ -98,7 +102,8 @@ def quit_tcp(): # Sends a quit packet to server over TCP before shutting down
     client_socket.send(data.encode())
     shutdown(client_socket)
 
-def quit_udp(): # Sends a quit packet to server over UDP before shutting down
+def quit_udp():
+    ''' Sends a quit packet to server over UDP before shutting down '''
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     data = f"QUIT\r\nclientID: {args.id}\r\n\r\n"
     sock.bind(client_address)
@@ -116,7 +121,8 @@ def quit_udp(): # Sends a quit packet to server over UDP before shutting down
         shutdown(sock)
 
 
-def register_tcp(): # Sends client information to Server over TCP connection
+def register_tcp():
+    ''' Sends client information to Server over TCP connection '''
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         client_socket.connect(server_address)
@@ -132,7 +138,8 @@ def register_tcp(): # Sends client information to Server over TCP connection
     client_socket.close()
     return
 
-def register_udp(): # Sends client information to Server over UDP connection
+def register_udp():
+    ''' Sends client information to Server over UDP connection '''
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     data = f"REGISTER\r\nclientID: {args.id}\r\nIP: {client_ip}\r\nPort: {args.port}\r\n\r\n"
     sock.bind(client_address)
@@ -151,7 +158,8 @@ def register_udp(): # Sends client information to Server over UDP connection
     print("Error: No response from server")
     shutdown(sock)
 
-def bridge_tcp(): # Begins bridge with server, if no other chatters online, enter wait, else receive other client info for connection
+def bridge_tcp():
+    ''' Begins bridge with server, if no other chatters online, enter wait state, else receive other client info for connection (over TCP) '''
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         client_socket.connect((server_ip, int(server_port)))
@@ -177,7 +185,8 @@ def bridge_tcp(): # Begins bridge with server, if no other chatters online, ente
     client_socket.close()
     return
 
-def bridge_udp(): # same as bridge_tcp() but over UDP
+def bridge_udp():
+    ''' Begins bridge with server, if no other chatters online, enter wait state, else receive other client info for connection (over UDP) '''
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(client_address)
     sock.settimeout(2)
@@ -201,7 +210,8 @@ def bridge_udp(): # same as bridge_tcp() but over UDP
     sock.close()
     return
         
-def wait_udp(): # waits for another client to send a message
+def wait_udp():
+    ''' Waits for another client to send a datagram to user '''
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(60)
     try:
@@ -248,7 +258,8 @@ def wait_udp(): # waits for another client to send a message
         shutdown(sock)
 
 
-def wait_tcp(): # Sets up client as server and waits for another client to connect
+def wait_tcp():
+    ''' Sets up client as server and waits for another client to connect '''
     serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         serverSocket.bind(client_address)
@@ -294,7 +305,8 @@ def wait_tcp(): # Sets up client as server and waits for another client to conne
     except KeyboardInterrupt:
         shutdown(client_connected)
 
-def chat_tcp(): # messages server to indicate a chat has begun, begins chat_loop
+def chat_tcp():
+    ''' Messages server to indicate a chat has begun, begins chat_loop '''
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect(server_address)
     data_to_server = f"CHAT\r\nclientID1: {args.id}\r\nclientID2: {chat_target[0]}"
@@ -312,6 +324,7 @@ def chat_tcp(): # messages server to indicate a chat has begun, begins chat_loop
         shutdown(client_socket)
 
 def chat_udp():
+    ''' Messages server to indicate a chat has begun, begins chat_loop '''
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(60)
     data_to_server = f"CHAT\r\nclientID1: {args.id}\r\nclientID2: {chat_target[0]}"
@@ -325,7 +338,8 @@ def chat_udp():
     except KeyboardInterrupt:
         shutdown(sock)
 
-def chat_loop_tcp(client_socket): # Connect to other client, begin chatting
+def chat_loop_tcp(client_socket):
+    ''' Connect to other client, begin chatting '''
     for line in sys.stdin:
         if line.rstrip() == '/quit':
             data = 'QUIT\r\n\r\n'
@@ -348,6 +362,7 @@ def chat_loop_tcp(client_socket): # Connect to other client, begin chatting
             print(message)
 
 def chat_loop_udp(sock, chatter):
+    ''' Connect to other client, begin chatting '''
     try:
         for line in sys.stdin:
             if line.rstrip() == '/quit':
@@ -373,6 +388,12 @@ def chat_loop_udp(sock, chatter):
         print("Timeout: shutting down")
 
 def shutdown(socket=None):
+    ''' Closes optional socket, and closes application.
+    Parameters
+    ----------
+    socket : socket
+        The socket to be closeed (default None)
+    '''
     if socket:
         socket.close()
     exit()

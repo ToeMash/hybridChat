@@ -24,7 +24,8 @@ suspect_ips = {}
 
 banned_ips = []
 
-def do_server_tcp(): # setup socket, bind on address, wait for TCP connection and complete server actions
+def do_server_tcp():
+    ''' Setup socket, bind on address, wait for TCP connection and complete server actions '''
     print(f"Server is listening on {server_ip}:{args.port}")
     serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
@@ -74,7 +75,8 @@ def do_server_tcp(): # setup socket, bind on address, wait for TCP connection an
         print(register_dict) # for dev
     
 
-def do_server_udp(): # setup socket, bind on address, wait for UDP packets and complete "server" actions
+def do_server_udp():
+    ''' setup socket, bind on address, wait for UDP packets and complete server actions '''
     print(f"Server is listening on {server_ip}:{args.port}")
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -115,6 +117,11 @@ def do_server_udp(): # setup socket, bind on address, wait for UDP packets and c
         
 
 def chat(data):
+    ''' Parses CHAT packet, removing clients from the register and removes them from suspect_ips. 
+    Parameters
+    ----------
+    data : packet
+        The incoming packet to be parsed'''
     data_list = data.decode().split('\r\n')
     client_id1 = data_list[1].split(' ')[1]
     client_id2 = data_list[2].split(' ')[1]
@@ -132,6 +139,11 @@ def chat(data):
     print(f"CLEANUP: removing {client_id2} from register\n")
 
 def cleanup(data):
+    ''' Parses a QUIT packet, removing the client from the register.
+    Parameters
+    ----------
+    data : packet
+        The incoming packet to be parsed'''
     data_list = data.decode().split('\r\n')
     client_id1 = data_list[1].split(' ')[1]
     if client_id1 in register_dict.keys():
@@ -140,6 +152,11 @@ def cleanup(data):
     return f"QUITACK\r\nclientID: {client_id1}\r\n\r\n"
 
 def register(data):
+    ''' Parses a REGISTER packet, and places the client information into the register. If the client_id is already registered, returns a REGNACK message, else returns a REGACK message.
+    Parameters
+    ----------
+    data : packet
+        The incoming packet to be parsed'''
     data_list = data.decode().split('\r\n')
     client_id = data_list[1].split(' ')[1]
     client_ip = data_list[2].split(' ')[1]
@@ -155,6 +172,11 @@ def register(data):
     return data_out
 
 def bridge(data):
+    ''' Parses a BRIDGE packet, and returns a BRIDGEACK packet containing another client information, or empty headers if no client is in the wait state. 
+    Parameters
+    ----------
+    data : packet
+        The incoming packet to be parsed'''
     data_list = data.decode().split('\r\n')
     client_id = data_list[1].split(' ')[1]
     if len(register_dict) > 1:
