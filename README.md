@@ -4,7 +4,7 @@ GOALS:
 * Learn how to build simple networked applications in Python 3.12.0
     - Built initially over TCP
     - Later developed over UDP
-        - NOTE: In the UDP implementation, I still made use of ACKs to confirm communications. This could have been implemented much more simply, but I wanted the user experience to be relatively consistent regardless of the server mode.
+        - NOTE: Obviously UDP doesn't really make sense for a chat application due to the unreliability and lack of order, but this was meant as a learning experience. In the UDP implementation, I still made use of ACKs to confirm communications. This could have been implemented much more simply, but I wanted the user experience to be relatively consistent regardless of the server mode.
 
 DESIGN:
 * This project relies on a server application and client application. The clients communicate with the server to register themselves, and to bridge to other clients. Once a chat connection is established, the clients communicate independently of the server in P2P communication, making this a hybrid model network application.
